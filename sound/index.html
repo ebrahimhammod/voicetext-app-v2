@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>منصة الإبداع الصوتي - تطبيق أندرويد APK</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="app_icon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="app_icon.png">
+    <link rel="apple-touch-icon" href="app_icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- شريط حالة الهاتف الذكي المحاكي للأندرويد -->
+    <div class="android-status-bar">
+        <span>10:30</span>
+        <div class="status-bar-icons">
+            <span>📶</span>
+            <span>5G</span>
+            <span>🔋 100%</span>
+        </div>
+    </div>
+
+    <!-- شريط التطبيق العلوي الثابت (App Bar) -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="brand-wrapper">
+                <img src="app_icon.png" alt="أيقونة المنصة" class="app-logo-img" width="44" height="44">
+                <div class="brand-info">
+                    <h1>منصة الإبداع الصوتي</h1>
+                    <span class="connection-status offline-ready">✓ يعمل بدون إنترنت (أوفلاين)</span>
+                </div>
+            </div>
+            <span class="apk-badge-chip">📱 APK Ready</span>
+        </div>
+    </header>
+
+    <!-- الحاوية الرئيسية للتطبيق -->
+    <main class="app-container">
+        
+        <!-- عنوان ترحيبي تفاعلي -->
+        <div class="welcome-banner">
+            <h2>مرحباً بك في تطبيق الصوت الذكي</h2>
+            <p>معالجة سريعة واستخراج دقيق للنصوص وتحويل الكلام محلياً 100%</p>
+            <div class="banner-meta-tag">⚡ محرك معالجة Whisper & Piper العصبي</div>
+        </div>
+
+        <!-- شبكة بطاقات الأدوات (أزرار كبيرة سهلة اللمس للتطبيقات) -->
+        <section class="tools-grid">
+            
+            <a href="sound.html" class="action-card">
+                <div class="card-media icon-audio">
+                    <span class="card-icon">🎤</span>
+                </div>
+                <div class="card-body">
+                    <h3>تحويل الصوت إلى نص</h3>
+                    <p>استخراج النصوص من الملفات الصوتية والفيديو بدقة عالية</p>
+                    <div class="card-meta">
+                        <span class="tech-badge">Whisper AI</span>
+                        <span class="speed-badge">خارج الاتصال</span>
+                    </div>
+                </div>
+                <span class="arrow-indicator">←</span>
+            </a>
+
+            <a href="text_to_speech.html" class="action-card">
+                <div class="card-media icon-speech">
+                    <span class="card-icon">⌂</span> <!-- الرمز الأسود البسيط المتفق عليه سابقاً أو التعديل المناسب -->
+                </div>
+                <div class="card-body">
+                    <h3>تحويل النص إلى صوت</h3>
+                    <p>تحويل النصوص المكتوبة إلى مقاطع صوتية بأصوات متعددة</p>
+                    <div class="card-meta">
+                        <span class="tech-badge">TTS Engine</span>
+                        <span class="speed-badge">متعدد اللغات</span>
+                    </div>
+                </div>
+                <span class="arrow-indicator">←</span>
+            </a>
+
+            <!-- بطاقة التفعيل والخطة السنوية -->
+            <a href="activation.html" class="action-card" style="border: 2px solid #bfdbfe; background: linear-gradient(135deg, #f0f7ff, #ffffff);">
+                <div class="card-media icon-apk" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2563eb;">
+                    <span class="card-icon">⚡</span>
+                </div>
+                <div class="card-body">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <h3 style="color: #1e3a8a;">خطة الاشتراك والتفعيل</h3>
+                        <span style="background: #2563eb; color: #fff; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 9999px;">80$ سنوياً</span>
+                    </div>
+                    <p>ترقية إلى الاستخدام المفتوح بدون قيود وتفعيل جهازك أوفلاين</p>
+                    <div class="card-meta">
+                        <span class="tech-badge" id="indexPlanBadge">الخطة المجانية</span>
+                        <span class="speed-badge" style="background: #ecfdf5; color: #059669;">تفعيل فوري</span>
+                    </div>
+                </div>
+                <span class="arrow-indicator">←</span>
+            </a>
+
+        </section>
+
+        <!-- لوحة تشخيص موارد الجهاز الذكية (System Dashboard) -->
+        <section class="dashboard-section" id="systemSection">
+            <div class="section-header">
+                <h3>📌 فحص كفاءة النظام</h3>
+                <p>تحليل موارد جهازك لاختيار نموذج الذكاء الاصطناعي الأفضل</p>
+            </div>
+
+            <!-- بطاقة التوصية بالنموذج (أهم عنصر تم تقديمه ليكون أوضح) -->
+            <div class="recommendation-card">
+                <div class="status-indicator animate-pulse" id="modelIcon">🟢</div>
+                <div class="recommendation-info">
+                    <h4 id="modelName">جاري تحميل النموذج...</h4>
+                    <p id="modelDesc">نحلل مواصفات جهازك لتخصيص التجربة الفضلى.</p>
+                </div>
+            </div>
+
+            <!-- شبكة مؤشرات الموارد الافتراضية للتطبيق -->
+            <div class="specs-grid">
+                
+                <div class="spec-tile">
+                    <div class="tile-icon">💾</div>
+                    <div class="tile-data">
+                        <span class="tile-label">الذاكرة (RAM)</span>
+                        <span class="tile-value" id="ramInfo">⏳ جاري...</span>
+                    </div>
+                </div>
+
+                <div class="spec-tile">
+                    <div class="tile-icon">⚙️</div>
+                    <div class="tile-data">
+                        <span class="tile-label">المعالج (CPU)</span>
+                        <span class="tile-value" id="cpuInfo">⏳ جاري...</span>
+                    </div>
+                </div>
+
+                <div class="spec-tile">
+                    <div class="tile-icon">🖥️</div>
+                    <div class="tile-data">
+                        <span class="tile-label">نوع الجهاز</span>
+                        <span class="tile-value" id="deviceInfo">⏳ جاري...</span>
+                    </div>
+                </div>
+
+                <div class="spec-tile">
+                    <div class="tile-icon">🌐</div>
+                    <div class="tile-data">
+                        <span class="tile-label">المتصفح</span>
+                        <span class="tile-value" id="browserInfo">⏳ جاري...</span>
+                    </div>
+                </div>
+
+                <div class="spec-tile">
+                    <div class="tile-icon">🔋</div>
+                    <div class="tile-data">
+                        <span class="tile-label">البطارية</span>
+                        <span class="tile-value" id="batteryInfo">⏳ جاري...</span>
+                    </div>
+                </div>
+
+                <div class="spec-tile">
+                    <div class="tile-icon">🎮</div>
+                    <div class="tile-data">
+                        <span class="tile-label">كرت الشاشة (GPU)</span>
+                        <span class="tile-value" id="gpuInfo">⏳ جاري...</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- شريط الحماية والخصوصية المدمج في اللوحة -->
+            <div class="privacy-notice">
+                <span class="lock-icon">🔒</span>
+                <p>جميع معالجات الأدوات والبيانات تتم محلياً 100% على جهازك لحماية خصوصيتك التامة.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- شريط التنقل السفلي الثابت الخاص بالتطبيقات الذكية (Bottom Navigation Bar) -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">الرئيسية</span>
+        </a>
+        <a href="sound.html" class="nav-item">
+            <span class="nav-icon">🎤</span>
+            <span class="nav-label">صوت لنص</span>
+        </a>
+        <a href="text_to_speech.html" class="nav-item">
+            <span class="nav-icon">🗣️</span>
+            <span class="nav-label">نص لصوت</span>
+        </a>
+        <a href="activation.html" class="nav-item">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">التفعيل</span>
+        </a>
+    </nav>
+
+    <script src="license.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const status = SoundLicense.getLicenseStatus();
+            const badge = document.getElementById('indexPlanBadge');
+            const connectionStatus = document.querySelector('.connection-status');
+            if (status.isPro) {
+                if (badge) {
+                    badge.textContent = 'الخطة السنوية (80$)';
+                    badge.style.background = '#ecfdf5';
+                    badge.style.color = '#059669';
+                }
+                if (connectionStatus) {
+                    connectionStatus.textContent = '⭐ الخطة السنوية مفعلة';
+                }
+            }
+        });
+    </script>
+    <script src="system.js"></script>
+    <script src="system_enhancer.js"></script>
+</body>
+</html>

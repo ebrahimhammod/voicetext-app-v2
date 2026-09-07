@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>خطة الاشتراك والتفعيل - منصة الصوت</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="app_icon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="app_icon.png">
+    <link rel="apple-touch-icon" href="app_icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- شريط حالة الهاتف الذكي المحاكي للأندرويد -->
+    <div class="android-status-bar">
+        <span>10:30</span>
+        <div class="status-bar-icons">
+            <span>📶</span>
+            <span>5G</span>
+            <span>🔋 100%</span>
+        </div>
+    </div>
+
+    <!-- شريط التطبيق العلوي الثابت (App Bar) -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="brand-wrapper">
+                <a href="index.html" style="text-decoration:none; display:flex; align-items:center;">
+                    <img src="app_icon.png" alt="أيقونة المنصة" class="app-logo-img" width="44" height="44">
+                </a>
+                <div class="brand-info">
+                    <h1>الاشتراك والتفعيل</h1>
+                    <span class="connection-status offline-ready" id="headerStatusBadge">✓ الخطة المجانية</span>
+                </div>
+            </div>
+            <button id="ownerLockBtn" class="apk-badge-chip" style="cursor: pointer; border: 1px solid #cbd5e1; background: #f8fafc;" title="دخول المالك لتوليد الأكواد">
+                🔒 لوحة المالك
+            </button>
+        </div>
+    </header>
+
+    <!-- الحاوية الرئيسية للتطبيق -->
+    <main class="app-container">
+
+        <!-- بطاقة المعرف الفريد للجهاز -->
+        <div class="welcome-banner" style="background: linear-gradient(135deg, #1e3a8a, #0f172a);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 18px;">معرّف جهازك الفريد (Device ID)</h2>
+                    <p style="font-size: 12px; color: #93c5fd; margin-top: 2px;">
+                        هذا الرقم التسلسلي خاص بجهازك فقط ولا يتكرر، ويستخدم لتوليد كود التفعيل المناسب.
+                    </p>
+                </div>
+                <span id="activePlanPill" style="padding: 4px 10px; border-radius: 9999px; background: rgba(255,255,255,0.2); font-size: 11px; font-weight: 800; color: #fff; white-space: nowrap;">
+                    مجاني
+                </span>
+            </div>
+
+            <div style="margin-top: 14px; background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.3); padding: 10px 14px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                <code id="displayDeviceId" style="font-family: monospace; font-size: 14px; font-weight: 800; color: #fef08a; letter-spacing: 1px;">
+                    DEV- جاري التحميل...
+                </code>
+                <button id="copyDeviceIdBtn" style="background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                    📋 نسخ
+                </button>
+            </div>
+            
+            <div id="licenseExpiryAlert" style="display: none; margin-top: 10px; font-size: 12px; color: #86efac; font-weight: 700;">
+                ⭐ اشتراكك السنوي سارٍ حتى: <span id="expiryDateText"></span> (<span id="daysRemainingText"></span> يوماً متبقية)
+            </div>
+        </div>
+
+        <!-- مقارنة الخطط: المجانية مقابل السنوية 80$ -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <h3>💎 مقارنة خطط الاستخدام</h3>
+                <p>اختر الخطة المناسبة لاحتياجاتك الصوتية</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                
+                <!-- الخطة المجانية -->
+                <div style="border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; background: #ffffff; position: relative;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 11px; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 2px 8px; border-radius: 6px;">الأساسية</span>
+                            <h4 style="font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 4px;">الخطة المجانية</h4>
+                        </div>
+                        <div style="text-align: left;">
+                            <span style="font-size: 18px; font-weight: 900; color: #0f172a;">مجاناً</span>
+                            <span style="font-size: 11px; color: #64748b; display: block;">محدودة</span>
+                        </div>
+                    </div>
+                    
+                    <ul style="list-style: none; padding: 0; margin: 12px 0 0 0; font-size: 12px; color: #475569; display: flex; flex-direction: column; gap: 8px;">
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #10b981; font-weight: bold;">✓</span> 3 تفريغات صوتية يومياً كحد أقصى
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #10b981; font-weight: bold;">✓</span> مدة الصوت بحد أقصى 60 ثانية للمقطع
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #10b981; font-weight: bold;">✓</span> تحويل النصوص حتى 250 حرف فقط
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px; color: #94a3b8;">
+                            <span style="color: #ef4444;">✕</span> لا تدعم الملفات الكبيرة والمحاضرات
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- الخطة السنوية الشاملة 80$ -->
+                <div style="border: 2px solid #2563eb; border-radius: 16px; padding: 18px; background: linear-gradient(135deg, #f0f7ff, #ffffff); position: relative; box-shadow: 0 4px 15px rgba(37,99,235,0.08);">
+                    <div style="position: absolute; top: -10px; left: 16px; background: #2563eb; color: #fff; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 9999px;">
+                        ⭐ الخطة الموصى بها
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 11px; font-weight: 800; color: #2563eb; background: #dbeafe; padding: 2px 8px; border-radius: 6px;">اشتراك كامل</span>
+                            <h4 style="font-size: 17px; font-weight: 900; color: #0f172a; margin-top: 4px;">الخطة السنوية الكاملة</h4>
+                        </div>
+                        <div style="text-align: left;">
+                            <span style="font-size: 22px; font-weight: 900; color: #2563eb;">$80</span>
+                            <span style="font-size: 11px; color: #64748b; display: block;">سنوياً (365 يوم)</span>
+                        </div>
+                    </div>
+
+                    <ul style="list-style: none; padding: 0; margin: 12px 0 16px 0; font-size: 12px; color: #1e293b; display: flex; flex-direction: column; gap: 8px;">
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #2563eb; font-weight: bold;">✓</span> <strong>تفريغ صوتي وفيديو غير محدود</strong> بدون أي حدود يومية
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #2563eb; font-weight: bold;">✓</span> فتح كافة نماذج Whisper الذكية وسرعة معالجة قصوى
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #2563eb; font-weight: bold;">✓</span> <strong>نطق نصوص ومقالات كاملة بلا حدود</strong> مع محرك Piper الصوتي
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #2563eb; font-weight: bold;">✓</span> <strong>يعمل محلياً بدون إنترنت 100%</strong> لحماية الخصوصية التامة
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 6px;">
+                            <span style="color: #2563eb; font-weight: bold;">✓</span> دعم فني وتحديثات مستمرة طوال فترة الاشتراك السنوي
+                        </li>
+                    </ul>
+
+                    <a id="subscribeWhatsAppBtn" href="#" target="_blank" class="main-app-btn" style="text-decoration: none;">
+                        <span>💬 طلب الاشتراك والدفع عبر واتساب (80$)</span>
+                    </a>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- تفاصيل الدفع والتحويل المصرفي -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <h3>🏦 بيانات الدفع والتحويل المالي</h3>
+                <p>يمكنك التحويل عبر أي شبكة صرافة أو بنك محلي</p>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                    <span style="font-size: 12px; color: #64748b; font-weight: 700;">اسم المستفيد:</span>
+                    <span style="font-size: 14px; font-weight: 800; color: #0f172a;">ابراهيم القديمي</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                    <span style="font-size: 12px; color: #64748b; font-weight: 700;">رقم الهاتف / واتساب:</span>
+                    <span style="font-size: 14px; font-weight: 800; color: #2563eb; font-family: monospace; direction: ltr;">+967 775 888 836</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                    <span style="font-size: 12px; color: #64748b; font-weight: 700;">قيمة الاشتراك السنوي:</span>
+                    <span style="font-size: 14px; font-weight: 800; color: #10b981;">80 دولار أمريكي (أو ما يعادلها)</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b; line-height: 1.5; margin-top: 4px;">
+                    💡 طرق التحويل المعتمدة: شبكة الكريمي (حساب / صرافة)، النجم، الامتياز، بنك التضامن، يمن إكسبرس، أو حوالات ويسترن يونيون وموني جرام. بعد التحويل يرجى إرسال الإشعار ليتم توليد كود التفعيل لك فوراً.
+                </div>
+            </div>
+        </section>
+
+        <!-- نموذج إدخال كود التفعيل للعميل -->
+        <section class="dashboard-section" id="activationInputSection">
+            <div class="section-header">
+                <h3>🔑 تفعيل التطبيق (إدخال كود التفعيل)</h3>
+                <p>أدخل الكود الذي استلمته من إبراهيم القديمي لتفعيل الخطة</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div>
+                    <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">
+                        كود التفعيل (المرسل إليك):
+                    </label>
+                    <input 
+                        type="text" 
+                        id="activationCodeInput" 
+                        placeholder="SND-A80-XXXX-XXXX-XXXX" 
+                        style="width: 100%; padding: 14px; border-radius: 12px; border: 2px solid #cbd5e1; font-family: monospace; font-size: 14px; font-weight: 700; text-transform: uppercase; direction: ltr; text-align: center;"
+                    />
+                </div>
+
+                <div id="activationResultAlert" style="display: none; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 700;"></div>
+
+                <button id="submitActivateBtn" class="main-app-btn">
+                    <span>⚡ تفعيل الخطة السنوية الآن</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- نافذة المالك (إبراهيم القديمي) لتوليد الأكواد للأجهزة والعملاء -->
+        <section class="dashboard-section" id="ownerAdminPanel" style="display: none; border: 2px solid #8b5cf6; background: #faf5ff;">
+            <div class="section-header" style="border-bottom: 1px solid #e9d5ff; padding-bottom: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="color: #6b21a8;">🔒 لوحة تحكم المالك (إبراهيم القديمي)</h3>
+                    <button id="closeOwnerPanelBtn" style="background: none; border: none; font-size: 16px; cursor: pointer; color: #6b21a8;">✕</button>
+                </div>
+                <p style="color: #7e22ce;">توليد أكواد التفعيل للعملاء والأجهزة (أوفلاين وأونلاين)</p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+                <div>
+                    <label style="font-size: 12px; font-weight: 700; color: #4c1d95; display: block; margin-bottom: 4px;">
+                        معرّف جهاز العميل (Device ID):
+                    </label>
+                    <div style="display: flex; gap: 6px;">
+                        <input 
+                            type="text" 
+                            id="ownerClientDeviceId" 
+                            placeholder="DEV-XXXX-XXXX-XXXX" 
+                            style="flex: 1; padding: 10px 12px; border: 1px solid #d8b4fe; border-radius: 10px; font-family: monospace; font-size: 13px; text-transform: uppercase; direction: ltr;"
+                        />
+                        <button id="pasteCurrentDeviceBtn" title="لصق معرف الجهاز الحالي للتجربة" style="padding: 10px 12px; background: #ede9fe; color: #6b21a8; border: 1px solid #d8b4fe; border-radius: 10px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap;">
+                            جهازي الحالي
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #4c1d95; display: block; margin-bottom: 4px;">
+                            رقم هاتف العميل (اختياري):
+                        </label>
+                        <input 
+                            type="text" 
+                            id="ownerClientPhone" 
+                            placeholder="77xxxxxxx" 
+                            style="width: 100%; padding: 10px; border: 1px solid #d8b4fe; border-radius: 10px; font-size: 12px;"
+                        />
+                    </div>
+                    <div>
+                        <label style="font-size: 11px; font-weight: 700; color: #4c1d95; display: block; margin-bottom: 4px;">
+                            الخطة وقيمة الاشتراك:
+                        </label>
+                        <select id="ownerPlanSelect" style="width: 100%; padding: 10px; border: 1px solid #d8b4fe; border-radius: 10px; font-size: 12px; font-weight: 700;">
+                            <option value="annual">سنوي (80 دولار) - 365 يوم</option>
+                            <option value="trial">تجريبي (30 يوم)</option>
+                            <option value="vip">دائم مدى الحياة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 11px; font-weight: 700; color: #4c1d95; display: block; margin-bottom: 4px;">
+                        مدة الصلاحية بالأيام (مسموح التعديل عليها):
+                    </label>
+                    <input 
+                        type="number" 
+                        id="ownerDaysInput" 
+                        value="365" 
+                        min="1" 
+                        max="3650" 
+                        style="width: 100%; padding: 10px; border: 1px solid #d8b4fe; border-radius: 10px; font-size: 12px;"
+                    />
+                </div>
+
+                <button id="ownerGenerateBtn" style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border: none; padding: 14px; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(109,40,217,0.25);">
+                    ⚡ توليد كود التفعيل للجهاز
+                </button>
+
+                <!-- صندوق الكود المولد -->
+                <div id="generatedCodeContainer" style="display: none; background: #ffffff; border: 2px dashed #a855f7; border-radius: 12px; padding: 14px; margin-top: 6px;">
+                    <div style="font-size: 11px; color: #6b21a8; font-weight: 700; margin-bottom: 4px;">
+                        الكود المولد بنجاح (جاهز للإرسال للعميل):
+                    </div>
+                    <div id="displayGeneratedCode" style="font-family: monospace; font-size: 15px; font-weight: 900; color: #581c87; direction: ltr; text-align: center; background: #faf5ff; padding: 10px; border-radius: 8px; user-select: all;">
+                        SND-A80-XXXX-XXXX-XXXX
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 10px;">
+                        <button id="copyCodeOnlyBtn" style="flex: 1; padding: 8px; background: #ede9fe; color: #6b21a8; border: 1px solid #c4b5fd; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                            📋 نسخ الكود فقط
+                        </button>
+                        <button id="copyWhatsAppReplyBtn" style="flex: 1; padding: 8px; background: #2563eb; color: #ffffff; border: none; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                            💬 نسخ رد الواتساب للعميل
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- شريط التنقل السفلي الثابت الخاص بالتطبيقات الذكية (Bottom Navigation Bar) -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">الرئيسية</span>
+        </a>
+        <a href="sound.html" class="nav-item">
+            <span class="nav-icon">🎤</span>
+            <span class="nav-label">صوت لنص</span>
+        </a>
+        <a href="text_to_speech.html" class="nav-item">
+            <span class="nav-icon">🗣️</span>
+            <span class="nav-label">نص لصوت</span>
+        </a>
+        <a href="activation.html" class="nav-item active">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">التفعيل</span>
+        </a>
+    </nav>
+
+    <!-- سكريبت إدارة التراخيص المشترك -->
+    <script src="license.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const deviceId = SoundLicense.getDeviceId();
+            const displayDeviceId = document.getElementById('displayDeviceId');
+            const copyDeviceIdBtn = document.getElementById('copyDeviceIdBtn');
+            const subscribeWhatsAppBtn = document.getElementById('subscribeWhatsAppBtn');
+            const headerStatusBadge = document.getElementById('headerStatusBadge');
+            const activePlanPill = document.getElementById('activePlanPill');
+            const licenseExpiryAlert = document.getElementById('licenseExpiryAlert');
+            const expiryDateText = document.getElementById('expiryDateText');
+            const daysRemainingText = document.getElementById('daysRemainingText');
+
+            // عرض المعرف الفريد
+            if (displayDeviceId) {
+                displayDeviceId.textContent = deviceId;
+            }
+
+            // تحديث رابط الواتساب الجاهز
+            if (subscribeWhatsAppBtn) {
+                subscribeWhatsAppBtn.href = SoundLicense.getWhatsAppOrderLink();
+            }
+
+            // تحديث حالة الاشتراك في الواجهة
+            function updateUIStatus() {
+                const status = SoundLicense.getLicenseStatus();
+                if (status.isPro) {
+                    headerStatusBadge.textContent = '⭐ الخطة السنوية مفعلة';
+                    headerStatusBadge.style.color = '#10b981';
+                    headerStatusBadge.style.borderColor = '#10b981';
+                    
+                    activePlanPill.textContent = '⭐ سنوي نشط (80$)';
+                    activePlanPill.style.background = '#10b981';
+
+                    licenseExpiryAlert.style.display = 'block';
+                    expiryDateText.textContent = status.formattedExpiry;
+                    daysRemainingText.textContent = status.daysRemaining;
+                } else {
+                    headerStatusBadge.textContent = '✓ الخطة المجانية (محدودة)';
+                    activePlanPill.textContent = 'مجاني محدود';
+                    licenseExpiryAlert.style.display = 'none';
+                }
+            }
+
+            updateUIStatus();
+
+            // نسخ معرف الجهاز
+            if (copyDeviceIdBtn) {
+                copyDeviceIdBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(deviceId).then(() => {
+                        copyDeviceIdBtn.textContent = '✓ تم النسخ';
+                        setTimeout(() => { copyDeviceIdBtn.textContent = '📋 نسخ'; }, 2000);
+                    });
+                });
+            }
+
+            // تفعيل الكود من قبل العميل
+            const activationCodeInput = document.getElementById('activationCodeInput');
+            const submitActivateBtn = document.getElementById('submitActivateBtn');
+            const activationResultAlert = document.getElementById('activationResultAlert');
+
+            if (submitActivateBtn && activationCodeInput) {
+                submitActivateBtn.addEventListener('click', () => {
+                    const code = activationCodeInput.value.trim();
+                    if (!code) {
+                        showActivationAlert('يرجى كتابة أو لصق كود التفعيل', false);
+                        return;
+                    }
+
+                    const result = SoundLicense.activateWithCode(code);
+                    if (result.success) {
+                        showActivationAlert(result.message, true);
+                        updateUIStatus();
+                        activationCodeInput.value = '';
+                    } else {
+                        showActivationAlert(result.message, false);
+                    }
+                });
+            }
+
+            function showActivationAlert(msg, isSuccess) {
+                if (!activationResultAlert) return;
+                activationResultAlert.style.display = 'block';
+                activationResultAlert.style.background = isSuccess ? '#ecfdf5' : '#fef2f2';
+                activationResultAlert.style.color = isSuccess ? '#065f46' : '#991b1b';
+                activationResultAlert.style.border = isSuccess ? '1px solid #a7f3d0' : '1px solid #fecaca';
+                activationResultAlert.textContent = msg;
+            }
+
+            // قسم المالك (إبراهيم القديمي)
+            const ownerLockBtn = document.getElementById('ownerLockBtn');
+            const ownerAdminPanel = document.getElementById('ownerAdminPanel');
+            const closeOwnerPanelBtn = document.getElementById('closeOwnerPanelBtn');
+            const ownerClientDeviceId = document.getElementById('ownerClientDeviceId');
+            const pasteCurrentDeviceBtn = document.getElementById('pasteCurrentDeviceBtn');
+            const ownerClientPhone = document.getElementById('ownerClientPhone');
+            const ownerPlanSelect = document.getElementById('ownerPlanSelect');
+            const ownerDaysInput = document.getElementById('ownerDaysInput');
+            const ownerGenerateBtn = document.getElementById('ownerGenerateBtn');
+            const generatedCodeContainer = document.getElementById('generatedCodeContainer');
+            const displayGeneratedCode = document.getElementById('displayGeneratedCode');
+            const copyCodeOnlyBtn = document.getElementById('copyCodeOnlyBtn');
+            const copyWhatsAppReplyBtn = document.getElementById('copyWhatsAppReplyBtn');
+
+            if (ownerLockBtn) {
+                ownerLockBtn.addEventListener('click', () => {
+                    const pin = prompt('أهلاً أ/ إبراهيم القديمي، يرجى إدخال رمز الأمان السري (PIN):', '');
+                    if (pin === null) return;
+                    if (SoundLicense.verifyOwnerPIN(pin)) {
+                        ownerAdminPanel.style.display = 'block';
+                        ownerAdminPanel.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        alert('رمز الأمان غير صحيح! الدخول مخصص للمالك فقط.');
+                    }
+                });
+            }
+
+            if (closeOwnerPanelBtn) {
+                closeOwnerPanelBtn.addEventListener('click', () => {
+                    ownerAdminPanel.style.display = 'none';
+                });
+            }
+
+            if (pasteCurrentDeviceBtn) {
+                pasteCurrentDeviceBtn.addEventListener('click', () => {
+                    ownerClientDeviceId.value = deviceId;
+                });
+            }
+
+            let lastGeneratedCode = '';
+            let lastTargetDevice = '';
+
+            if (ownerGenerateBtn) {
+                ownerGenerateBtn.addEventListener('click', () => {
+                    const targetDev = ownerClientDeviceId.value.trim();
+                    if (!targetDev) {
+                        alert('يرجى إدخال معرّف جهاز العميل');
+                        return;
+                    }
+
+                    const plan = ownerPlanSelect.value;
+                    let days = parseInt(ownerDaysInput.value, 10) || 365;
+                    if (plan === 'vip') days = 3650;
+                    if (plan === 'trial') days = 30;
+
+                    try {
+                        const code = SoundLicense.generateActivationCode(targetDev, plan, days);
+                        lastGeneratedCode = code;
+                        lastTargetDevice = targetDev;
+                        displayGeneratedCode.textContent = code;
+                        generatedCodeContainer.style.display = 'block';
+                    } catch (e) {
+                        alert(e.message);
+                    }
+                });
+            }
+
+            if (copyCodeOnlyBtn) {
+                copyCodeOnlyBtn.addEventListener('click', () => {
+                    if (!lastGeneratedCode) return;
+                    navigator.clipboard.writeText(lastGeneratedCode).then(() => {
+                        copyCodeOnlyBtn.textContent = '✓ تم النسخ!';
+                        setTimeout(() => { copyCodeOnlyBtn.textContent = '📋 نسخ الكود فقط'; }, 2000);
+                    });
+                });
+            }
+
+            if (copyWhatsAppReplyBtn) {
+                copyWhatsAppReplyBtn.addEventListener('click', () => {
+                    if (!lastGeneratedCode) return;
+                    const replyMessage = 
+`أهلاً بك، تم تأكيد اشتراكك في الخطة السنوية الشاملة لمنصة الصوت بنجاح! 🌟
+
+📋 كود التفعيل الخاص بجهازك:
+${lastGeneratedCode}
+
+📌 طريقة التفعيل:
+1. افتح التطبيق، ثم اذهب إلى صفحة (التفعيل).
+2. الصق الكود في خانة كود التفعيل واضغط (تفعيل الخطة السنوية).
+3. سيعمل معك التطبيق فوراً بدون إنترنت أوفلاين مع فتح كافة الميزات بلا حدود.
+
+شكراً لثقتك بنا!
+أ/ إبراهيم القديمي (+967775888836)`;
+
+                    navigator.clipboard.writeText(replyMessage).then(() => {
+                        copyWhatsAppReplyBtn.textContent = '✓ تم نسخ الرسالة!';
+                        setTimeout(() => { copyWhatsAppReplyBtn.textContent = '💬 نسخ رد الواتساب للعميل'; }, 2000);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

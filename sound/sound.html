@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>تفريغ الصوت إلى نص - تطبيق أندرويد APK</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="app_icon.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="app_icon.png">
+    <link rel="apple-touch-icon" href="app_icon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta name="theme-color" content="#2563eb">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- شريط حالة الهاتف الذكي المحاكي للأندرويد -->
+    <div class="android-status-bar">
+        <span>10:30</span>
+        <div class="status-bar-icons">
+            <span>📶</span>
+            <span>5G</span>
+            <span>🔋 100%</span>
+        </div>
+    </div>
+
+    <!-- شريط التطبيق العلوي الثابت (App Bar) -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="brand-wrapper">
+                <a href="index.html" style="text-decoration:none; display:flex; align-items:center;">
+                    <img src="app_icon.png" alt="أيقونة المنصة" class="app-logo-img" width="44" height="44">
+                </a>
+                <div class="brand-info">
+                    <h1>تحويل الصوت إلى نص</h1>
+                    <span class="connection-status offline-ready" id="soundStatusBadge">✓ معالجة محلية ذكية</span>
+                </div>
+            </div>
+            <a href="activation.html" class="apk-badge-chip" id="soundPlanChip" style="text-decoration: none;" title="ترقية الخطة">
+                الخطة المجانية
+            </a>
+        </div>
+    </header>
+
+    <!-- الحاوية الرئيسية للتطبيق (App Container) -->
+    <main class="app-container">
+
+        <!-- ===== 1. منطقة رفع الملفات (تأثير السحب والإفلات اللمسي) ===== -->
+        <section class="upload-section">
+            <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-pulse-container">
+                    <span class="upload-icon">📁</span>
+                </div>
+                <p class="upload-primary-text">اسحب الملف الصوتي أو الفيديو هنا</p>
+                <p class="upload-secondary-text">أو اضغط لتصفح ملفات جهازك</p>
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept=".wav,.mp3,.m4a,.flac,.txt,.mp4,.mpeg,.mpga,.ogg,.oga,.webm,.aac,.aiff,.aif,.wma,.amr,.opus,.avi,.mov"
+                    hidden>
+            </div>
+            
+            <!-- معلومات الملف المختار بعد الرفع بطراز الكروت الذكية -->
+            <div id="fileInfo" class="file-info-card" style="display:none;">
+                <div class="file-meta-icon">🎵</div>
+                <div class="file-meta-details">
+                    <span id="fileName" class="file-name-text">⏳ اسم الملف</span>
+                    <span id="fileSize" class="file-size-text">⏳ الحجم</span>
+                </div>
+            </div>
+        </section>
+
+                <!-- ===== خيارات تخصيص اللغة واللهجة (ميزة جديدة) ===== -->
+        <section class="dashboard-section">
+            <div class="section-header">
+                <h3>🌐 تخصيص لغة الصوت واللهجة</h3>
+                <p>تحديد اللغة واللهجة يرفع دقة استخراج النصوص بنسبة 40% ويمنع التداخل</p>
+            </div>
+            
+            <div class="tts-selectors-group" style="margin-top: 14px;">
+                <!-- اختيار اللغة الأساسية -->
+                <div class="selector-field">
+                    <label for="languageSelect" class="field-label">🗣️ لغة النطق الأساسية:</label>
+                    <div class="select-style-wrapper">
+                        <select id="languageSelect" class="app-select-dropdown">
+                            <option value="ar" selected>العربية (Arabic)</option>
+                            <option value="en"> الإنجليزية (English)</option>
+                            <option value="auto">🤖 تعرف تلقائي ذكي</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- اختيار اللهجة العربية -->
+                <div class="selector-field" id="dialectField">
+                    <label for="dialectSelect" class="field-label">📍 اللهجة المحلية (لسياق القاموس):</label>
+                    <div class="select-style-wrapper">
+                        <select id="dialectSelect" class="app-select-dropdown">
+                            <option value="sa" selected>🇸🇦 لهجة خليجية (السعودية، الإمارات، الكويت...)</option>
+                            <option value="eg">🇪🇬 لهجة مصريّة (جمهورية مصر العربية)</option>
+                            <option value="ye">🇾🇪 لهجة يمنية (صنعانية، عدنية، حضرمية...)</option>
+                            <option value="sh">🇵🇸 لهجة شامية (سوريا، لبنان، فلسطين، الأردن)</option>
+                            <option value="mag">🇲🇦 لهجة مغاربية (المغرب، تونس، الجزائر)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== خيارات التصحيح الإملائي (تم تحديثها لدعم التجميد الأوفلاين) ===== -->
+        <section class="dashboard-section correction-wrapper">
+            <div class="section-header">
+                <h3>🔧 خيارات الذكاء الاصطناعي لتصحيح النص</h3>
+                <p>اختر محرك التدقيق اللغوي المناسب لقوة اتصالك</p>
+            </div>
+            
+            <div class="correction-options-group">
+              <!-- قمنا بنقل المعرّف id="latCard" إلى الـ label الخارجي لضمان قفل وتجميد الكرت بالكامل ومنع أي تسريب للمس -->
+                <label class="custom-radio-card">
+                    <input type="radio" name="correction" value="PY" checked>
+                    <div class="radio-card-content">
+                        <span class="option-icon">🔤</span>
+                        <div class="option-text">
+                            <span class="option-name">PY (أساسي وسريع)</span>
+                            <span class="option-desc">يصحح الكلمات المكتوبة خطأً، خفيف جداً ويعمل 100% بدون إنترنت.</span>
+                        </div>
+                    </div>
+                </label>
+
+                <label class="custom-radio-card">
+                    <input type="radio" name="correction" value="OFF">
+                    <div class="radio-card-content">
+                        <span class="option-icon">⛔</span>
+                        <div class="option-text">
+                            <span class="option-name">إيقاف التدقيق</span>
+                            <span class="option-desc">يعرض النصوص المستخرجة خام تماماً كما نطقها المتحدث بدون تعديل.</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+        </section>
+
+
+        <!-- ===== 3. زر تفعيل الأكشن الرئيسي (Floating App Action Button) ===== -->
+        <section class="action-section">
+            <button id="transcribeBtn" class="main-app-btn" disabled>
+                ⏳ يرجى اختيار ملف للبدء
+            </button>
+        </section>
+
+        <!-- ===== 4. شريط التقدم التفاعلي ومراحل التشغيل ===== -->
+        <section class="dashboard-section progress-card-section" id="progressSection" style="display:none;">
+            <div class="progress-header">
+                <div class="progress-text" id="progressText">⏳ جاري تهيئة الذكاء الاصطناعي...</div>
+            </div>
+            <div class="progress-track-bg">
+                <div class="progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+            </div>
+            <div class="app-steps-horizontal">
+                <span class="step-bubble" id="step1" data-label="تحميل">📥</span>
+                <span class="step-bubble" id="step2" data-label="تحليل">🎤</span>
+                <span class="step-bubble" id="step3" data-label="استخراج">📝</span>
+                <span class="step-bubble" id="step4" data-label="تصحيح">🔧</span>
+                <span class="step-bubble" id="step5" data-label="اكتمال">✅</span>
+            </div>
+        </section>
+
+        <!-- ===== 5. لوحة التحكم بالنتائج والنص المستخرج ===== -->
+        <section class="dashboard-section result-card-section" id="resultSection" style="display:none;">
+            <div class="section-header">
+                <h3>📝 النص المستخرج والمفرغ</h3>
+                <p>تم تفريغ الصوت بنجاح محلياً، يمكنك الآن تعديله أو حفظه</p>
+            </div>
+            <div class="app-result-box" id="resultText" contenteditable="true"></div>
+            
+            <div class="result-app-actions">
+                <button onclick="copyText()" class="sub-app-btn copy-theme">📋 نسخ النص</button>
+                <button onclick="downloadText()" class="sub-app-btn download-theme">💾 تحميل كملف</button>
+            </div>
+        </section>
+
+        <!-- إشعار الخصوصية الصغير المدمج -->
+        <div class="privacy-notice" style="margin-top:24px; justify-content: center;">
+            <span class="lock-icon">🔒</span>
+            <p>المعالجة الصوتية تتم محلياً بالكامل (Offline) ولا يتم رفع أي ملف خارج جهازك.</p>
+        </div>
+
+    </main>
+
+    <!-- شريط التنقل السفلي الثابت الخاص بالتطبيقات الذكية (Bottom Navigation Bar) -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="nav-item">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">الرئيسية</span>
+        </a>
+        <a href="sound.html" class="nav-item active">
+            <span class="nav-icon">🎤</span>
+            <span class="nav-label">صوت لنص</span>
+        </a>
+        <a href="text_to_speech.html" class="nav-item">
+            <span class="nav-icon">🗣️</span>
+            <span class="nav-label">نص لصوت</span>
+        </a>
+        <a href="activation.html" class="nav-item">
+            <span class="nav-icon">⚡</span>
+            <span class="nav-label">التفعيل</span>
+        </a>
+    </nav>
+
+    <!-- نظام التراخيص والاستهلاك الموحد -->
+    <script src="license.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const status = SoundLicense.getLicenseStatus();
+            const chip = document.getElementById('soundPlanChip');
+            const badge = document.getElementById('soundStatusBadge');
+            if (status.isPro) {
+                if (chip) {
+                    chip.textContent = '⭐ سنوي نشط (80$)';
+                    chip.style.background = '#ecfdf5';
+                    chip.style.color = '#059669';
+                    chip.style.borderColor = '#10b981';
+                }
+                if (badge) {
+                    badge.textContent = '✓ استخراج غير محدود (VIP)';
+                }
+            } else {
+                if (chip) {
+                    chip.textContent = `مجاني (${status.remainingDaily}/3 متبقي)`;
+                }
+            }
+        });
+    </script>
+
+    <!-- ملف الإعدادات الموحد للربط بين الأوفلاين والأونلاين -->
+    <script src="config.js"></script>
+
+    <!-- ملف الجافاسكريبت الأصلي للتحكم وتأدية الوظائف البرمجية -->
+    <script src="transcribe.js"></script>
+</body>
+</html>

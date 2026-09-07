@@ -1,0 +1,23 @@
+{
+  "appId": "com.creative.soundapp",
+  "appName": "منصة الإبداع الصوتي",
+  "webDir": "sound",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "backgroundColor": "#f8fafc",
+  "android": {
+    "allowMixedContent": true,
+    "webContentsDebuggingEnabled": true,
+    "backgroundColor": "#f8fafc"
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "body",
+      "style": "LIGHT",
+      "resizeOnFullScreen": true
+    }
+  }
+}

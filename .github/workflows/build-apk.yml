@@ -1,0 +1,83 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: ["main", "master"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Native APK (Free Lifetime)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: Install Capacitor Dependencies
+        run: |
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/keyboard
+
+      - name: Add and Sync Android Project
+        run: |
+          rm -f android/local.properties
+          npx cap add android || true
+          npx cap sync android
+
+          # ✅ ضبط وتثبيت خصائص الأندرويد لمنع الشاشة السوداء والوميض نهائياً
+          if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
+            sed -i 's/android:windowSoftInputMode="[^"]*"/android:windowSoftInputMode="adjustPan"/g' android/app/src/main/AndroidManifest.xml
+          fi
+
+          # ✅ التحقق من وجود ملف صوت كريم أوفلاين وتنزيله تلقائياً في سيرفر GitHub Actions إذا لزم
+          mkdir -p sound/piper_voices
+          if [ ! -f "sound/piper_voices/ar_JO-kareem-medium.onnx" ] || [ $(wc -c <"sound/piper_voices/ar_JO-kareem-medium.onnx") -lt 1000000 ]; then
+            echo "Downloading Piper Kareem ONNX model..."
+            curl -L -o sound/piper_voices/ar_JO-kareem-medium.onnx https://huggingface.co/rhasspy/piper-voices/resolve/main/ar/ar_JO/kareem/medium/ar_JO-kareem-medium.onnx
+          fi
+
+          # ✅ نسخ أيقونة المارد الجديدة إلى جميع مجلدات الموارد في أندرويد لجميع أحجام ودقات الشاشات
+          for density in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+            mkdir -p "android/app/src/main/res/$density"
+            cp sound/app_icon.png "android/app/src/main/res/$density/ic_launcher.png" || true
+            cp sound/app_icon.png "android/app/src/main/res/$density/ic_launcher_round.png" || true
+            cp sound/app_icon.png "android/app/src/main/res/$density/ic_launcher_foreground.png" || true
+          done
+          mkdir -p android/app/src/main/res/drawable
+          cp sound/app_icon.png android/app/src/main/res/drawable/splash.png || true
+
+          # ✅ تعيين خلفية النافذة الأصلية للأندرويد إلى اللون الأبيض الفاتح
+          mkdir -p android/app/src/main/res/values
+          echo '<?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="white">#f8fafc</color>
+              <color name="windowBackground">#f8fafc</color>
+          </resources>' > android/app/src/main/res/values/colors.xml
+
+          if [ -f "android/app/src/main/res/values/styles.xml" ]; then
+            sed -i 's|</style>|    <item name="android:windowBackground">#f8fafc</item>\n    <item name="android:colorBackground">#f8fafc</item>\n    </style>|g' android/app/src/main/res/values/styles.xml
+          fi
+
+      - name: Setup Android SDK and Build APK
+        run: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoundCreativeApp-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30

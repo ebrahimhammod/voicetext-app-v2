@@ -1,0 +1,6 @@
+{
+  "name": "VoiceText Studio | تحويل وتفريغ الصوت والنص",
+  "description": "تطبيق احترافي متكامل لتحويل الصوت إلى نص وتفريغ التسجيلات، وتحويل النص إلى صوت طبيعي، واستيراد وتحديث مشاريع الويب.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
