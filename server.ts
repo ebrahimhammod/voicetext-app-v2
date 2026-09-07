@@ -80,7 +80,7 @@ app.post("/api/transcribe", async (req, res) => {
       `قم بتفريغ وتحويل هذا التسجيل الصوتي إلى نص مكتوب باللغة ${language === 'ar' ? 'العربية' : language} بدقة واحترافية عالية مع تصحيح الأخطاء اللغوية والإملائية واستخدام علامات الترقيم الصحيحة. أعد فقط النص المفرغ بدون أي شروحات أو مقدمات.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: [
         {
           parts: [
@@ -102,50 +102,77 @@ app.post("/api/transcribe", async (req, res) => {
   }
 });
 
-// Text-to-Speech using Gemini TTS
+// Text-to-Speech using Smart Engine: Microsoft Edge Neural (online) + Piper Kareem (offline)
 app.post("/api/tts", async (req, res) => {
   try {
-    const { text, voice = "Kore" } = req.body;
+    const { text, voice = "ar-SA-ZariyahNeural", mode = "auto" } = req.body;
 
     if (!text || !text.trim()) {
       return res.status(400).json({ error: "الرجاء إدخال نص لتحويله لصوت" });
     }
 
-    const ai = getGenAI();
-    if (!ai) {
-      return res.status(503).json({
-        error: "Gemini API key is not configured. Falling back to browser speech synthesis.",
-        fallbackToBrowser: true,
+    const isOfflineMode = mode === "offline" || voice === "ar_kareem" || voice === "ar_JO-kareem-medium";
+    let audioB64 = "";
+    let usedEngine = "";
+    let resolvedVoice = voice;
+    let sampleRate = 24000;
+
+    // أ) Online: Microsoft Edge Neural (fast, high quality)
+    if (!isOfflineMode) {
+      try {
+        const edgeVoice = voice.includes("Neural") ? voice : "ar-SA-ZariyahNeural";
+        audioB64 = await generateMsEdgeTTS(text.trim(), edgeVoice, 1.0, 0);
+        usedEngine = `Microsoft Edge Neural (${edgeVoice})`;
+        resolvedVoice = edgeVoice;
+      } catch (edgeErr) {
+        console.warn("Edge TTS error, falling back to Piper:", edgeErr);
+      }
+    }
+
+    // ب) Offline: Piper Kareem neural (works without internet)
+    if (!audioB64) {
+      try {
+        audioB64 = await generatePiperTTS(text.trim());
+        usedEngine = "Piper AI (كريم العصبي - أوفلاين)";
+        resolvedVoice = "ar_JO-kareem-medium";
+        sampleRate = 22050;
+      } catch (piperErr) {
+        console.warn("Piper TTS error:", piperErr);
+      }
+    }
+
+    // ج) Last resort: try Edge Neural again (online) to guarantee a real voice
+    if (!audioB64) {
+      try {
+        const fallbackVoice = "ar-SA-ZariyahNeural";
+        audioB64 = await generateMsEdgeTTS(text.trim(), fallbackVoice, 1.0, 0);
+        usedEngine = `Microsoft Edge Neural (${fallbackVoice})`;
+        resolvedVoice = fallbackVoice;
+      } catch (e) {
+        console.warn("Final Edge TTS fallback failed:", e);
+      }
+    }
+
+    if (audioB64) {
+      return res.json({
+        success: true,
+        audioBase64: audioB64,
+        audio: audioB64,
+        engine: usedEngine,
+        voice: resolvedVoice,
+        mode: isOfflineMode ? "offline" : "online",
+        sampleRate,
       });
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.1-flash-tts-preview",
-      contents: [{ parts: [{ text: text.trim() }] }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: voice },
-          },
-        },
-      },
+    return res.status(500).json({
+      error: "تعذر توليد الصوت بأي محرك متاح. تأكد من تشغيل نموذج Piper واتصالك بالإنترنت.",
+      fallbackToBrowser: true,
     });
-
-    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-    if (!base64Audio) {
-      return res.status(500).json({
-        error: "لم يتم استرجاع بيانات الصوت من النموذج",
-        fallbackToBrowser: true,
-      });
-    }
-
-    res.json({ audioBase64: base64Audio, sampleRate: 24000 });
   } catch (error: any) {
     console.error("TTS API error:", error);
     res.status(500).json({
-      error: error.message || "فشل توليد الصوت بالذكاء الاصطناعي",
+      error: error.message || "فشل توليد الصوت",
       fallbackToBrowser: true,
     });
   }
@@ -192,7 +219,7 @@ ${fileDescriptions}
 4. خطوات مقترحة للمستخدم للاستفادة القصوى وتصدير التطبيق.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
 
@@ -535,7 +562,7 @@ ${dialectContext}
 - لا تضف أي مقدمة أو تعليق أو خاتمة إطلاقاً.`;
 
         const response = await ai.models.generateContent({
-          model: "gemini-3.6-flash",
+          model: "gemini-2.5-flash",
           contents: [
             {
               parts: [

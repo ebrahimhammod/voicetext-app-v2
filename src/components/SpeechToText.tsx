@@ -59,6 +59,17 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
   useEffect(() => {
     const SpeechRecognition = getSpeechRecognitionClass();
     if (SpeechRecognition) {
+      // HTTPS check — Web Speech API requires secure context (HTTPS or localhost)
+      const isSecure = typeof window !== 'undefined' &&
+        (window.isSecureContext ||
+         window.location.hostname === 'localhost' ||
+         window.location.hostname === '127.0.0.1' ||
+         window.location.protocol === 'https:');
+
+      if (!isSecure) {
+        setErrorMessage('⚠️ التعرف الصوتي اللحظي يحتاج HTTPS أو localhost. يمكنك رفع ملف صوتي بدلاً من ذلك.');
+      }
+
       const recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
@@ -91,10 +102,17 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
 
       recognition.onerror = (event: any) => {
         console.error('Speech recognition error:', event.error);
-        if (event.error === 'not-allowed') {
-          setErrorMessage('تم رفض إذن الوصول إلى الميكروفون. يرجى تفعيله من إعدادات المتصفح.');
+        setIsRecording(false);
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          setErrorMessage('تم رفض إذن الوصول إلى الميكروفون. يرجى تفعيله من إعدادات المتصفح (أيقونة القفل في شريط العنوان).');
+        } else if (event.error === 'no-speech') {
+          setErrorMessage('لم يتم اكتشاف صوت. تأكد من التحدث بوضوح قرب الميكروفون.');
         } else if (event.error === 'network') {
-          setErrorMessage('فشل الاتصال بخدمة التعرف الصوتي. تأكد من اتصال الإنترنت.');
+          setErrorMessage('فشل الاتصال بخدمة التعرف الصوتي. تأكد من اتصال الإنترنت أو ارفع ملف صوتي بدلاً من ذلك.');
+        } else if (event.error === 'audio-capture') {
+          setErrorMessage('تعذر فتح الميكروفون. تأكد من توصيله وعدم استخدامه من تطبيق آخر.');
+        } else {
+          setErrorMessage(`خطأ في التعرف الصوتي: ${event.error}. جرب رفع ملف صوتي.`);
         }
       };
 
@@ -104,6 +122,8 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       };
 
       recognitionRef.current = recognition;
+    } else {
+      setErrorMessage('⚠️ متصفحك لا يدعم التعرف الصوتي اللحظي. استخدم Chrome أو Edge، أو ارفع ملف صوتي.');
     }
 
     return () => {
@@ -523,14 +543,16 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
         </div>
 
         {/* Text Area */}
-        <div className="relative min-h-[160px] max-h-[360px] overflow-y-auto p-4 rounded-2xl bg-slate-50 border border-slate-200 focus-within:border-blue-400 transition-colors">
+        <div className="relative p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus-within:border-blue-400 focus-within:bg-white focus-within:shadow-md transition-all">
           <textarea
             id="stt-textarea"
             value={transcription}
             onChange={(e) => setTranscription(e.target.value)}
             placeholder="سيظهر النص المفرغ هنا مباشرة أثناء حديثك أو عند رفع ملف صوتي..."
-            className="w-full h-full min-h-[140px] bg-transparent border-0 resize-none text-slate-800 text-base leading-relaxed focus:outline-hidden"
+            className="w-full min-h-[180px] max-h-[360px] bg-transparent border-0 resize-y text-slate-800 text-base leading-loose focus:outline-none focus:ring-0 placeholder:text-slate-400"
             dir="auto"
+            style={{ fontFamily: "'Tajawal', system-ui, sans-serif" }}
+            spellCheck={false}
           />
           {interimText && (
             <div className="text-blue-600 text-sm font-medium italic mt-2 animate-pulse">

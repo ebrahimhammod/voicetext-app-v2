@@ -37,8 +37,8 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
   const [text, setText] = useState(initialText);
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedVoice, setSelectedVoice] = useState<string>('');
-  const [engine, setEngine] = useState<'browser' | 'ai'>('browser');
-  const [aiVoice, setAiVoice] = useState<'Kore' | 'Fenrir' | 'Puck' | 'Zephyr'>('Kore');
+  const [engine, setEngine] = useState<'browser' | 'ai'>('ai');
+  const [aiVoice, setAiVoice] = useState<string>('ar-SA-ZariyahNeural');
   const [rate, setRate] = useState<number>(1.0);
   const [pitch, setPitch] = useState<number>(1.0);
   const [volume, setVolume] = useState<number>(1.0);
@@ -144,16 +144,28 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
-  // Handle Play with Gemini AI TTS
+  // Handle Play with AI TTS (Edge Neural online + Piper Kareem offline)
   const speakWithAI = async () => {
     if (!text.trim()) {
       setErrorMessage('يرجى كتابة نص لتوليد الصوت.');
       return;
     }
 
+    // إذا مفيش نص كتير (تحت 2 حرف) نوقف
+    if (isPlaying) {
+      // إيقاف التشغيل
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      setIsPlaying(false);
+      setStatusMessage(null);
+      return;
+    }
+
     setIsGenerating(true);
     setErrorMessage(null);
-    setStatusMessage('جاري توليد الصوت فائق الدقة بالذكاء الاصطناعي...');
+    setStatusMessage('جاري توليد الصوت بالذكاء الاصطناعي...');
 
     try {
       const res = await fetch('/api/tts', {
@@ -166,25 +178,36 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
       });
 
       const data = await res.json();
-      if (data.audioBase64) {
-        const audioUrl = base64ToAudioUrl(data.audioBase64, 'audio/mp3');
+      // يقبل audioBase64 أو audio (للاتساق)
+      const b64 = data.audioBase64 || data.audio;
+      if (b64) {
+        // Piper بيرجع wav، Edge بيرجع mp3
+        const mime = (data.engine && data.engine.includes('Piper')) ? 'audio/wav' : 'audio/mp3';
+        const audioUrl = base64ToAudioUrl(b64, mime);
         setGeneratedAudioUrl(audioUrl);
-        setStatusMessage('✅ تم توليد الصوت بنجاح! اضغط على زر التشغيل للاستماع.');
 
         if (audioRef.current) {
           audioRef.current.src = audioUrl;
-          audioRef.current.pause();
-          setIsPlaying(false);
+          audioRef.current.load();
+          // شغل الصوت تلقائياً بعد التحميل
+          try {
+            await audioRef.current.play();
+            setIsPlaying(true);
+            setStatusMessage(`✅ جاري التشغيل: ${data.engine || 'AI'}`);
+          } catch (playErr) {
+            console.warn('Auto-play blocked, user must click play:', playErr);
+            setStatusMessage('✅ تم توليد الصوت. اضغط زر ▶️ للاستماع.');
+            setIsPlaying(false);
+          }
         }
       } else if (data.fallbackToBrowser) {
-        // Fallback to browser without forced autoplay
-        setStatusMessage('تم تجهيز النص للمتصفح. اضغط تشغيل للبدء.');
+        setErrorMessage(data.error || 'تعذر توليد الصوت. جرب صوت المتصفح.');
       } else {
         setErrorMessage(data.error || 'تعذر توليد الصوت');
       }
     } catch (err: any) {
       console.error('AI TTS error:', err);
-      setErrorMessage('حدث خطأ أثناء طلب توليد الصوت بالـ AI.');
+      setErrorMessage('حدث خطأ أثناء الاتصال بالسيرفر. تأكد من تشغيله.');
     } finally {
       setIsGenerating(false);
     }
@@ -198,6 +221,7 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
       }
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0;
       }
       setIsPlaying(false);
       setIsPaused(false);
@@ -264,7 +288,17 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
         ref={audioRef}
         onEnded={() => {
           setIsPlaying(false);
-          setStatusMessage(null);
+          setStatusMessage('✅ انتهى التشغيل');
+        }}
+        onError={() => {
+          setIsPlaying(false);
+          setErrorMessage('فشل تشغيل الملف الصوتي. جرب صوت آخر.');
+        }}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => {
+          if (audioRef.current && !audioRef.current.ended) {
+            setIsPlaying(false);
+          }
         }}
         className="hidden"
       />
@@ -306,7 +340,7 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>محرك AI عالي الجودة</span>
+            <span>محرك AI (Edge + Kareem)</span>
           </button>
         </div>
       </div>
@@ -328,14 +362,16 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
         </div>
 
         {/* Textarea */}
-        <div className="relative min-h-[160px] p-4 rounded-2xl bg-slate-50 border border-slate-200 focus-within:border-indigo-400 transition-colors">
+        <div className="relative p-4 rounded-2xl bg-slate-50 border-2 border-slate-200 focus-within:border-indigo-400 focus-within:bg-white focus-within:shadow-md transition-all">
           <textarea
             id="tts-textarea"
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="اكتب أو الصق النص العربي أو الإنجليزي هنا ليتم نطقه فورياً وبشكل معبر..."
-            className="w-full h-40 bg-transparent border-0 resize-none text-slate-800 text-base leading-relaxed focus:outline-hidden"
+            className="w-full min-h-[180px] bg-transparent border-0 resize-y text-slate-800 text-base leading-loose focus:outline-none focus:ring-0 placeholder:text-slate-400"
             dir="auto"
+            style={{ fontFamily: "'Tajawal', system-ui, sans-serif" }}
+            spellCheck={false}
           />
         </div>
 
@@ -382,7 +418,7 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
         {/* Voice Selector */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
           <label className="text-xs font-bold text-slate-700 block">
-            {engine === 'ai' ? 'صوت الذكاء الاصطناعي (Gemini TTS)' : 'صوت المتصفح المتاح'}
+            {engine === 'ai' ? 'صوت الذكاء الاصطناعي (Edge + Piper)' : 'صوت المتصفح المتاح'}
           </label>
 
           {engine === 'ai' ? (
@@ -392,10 +428,19 @@ export const TextToSpeech: React.FC<TextToSpeechProps> = ({
               onChange={(e: any) => setAiVoice(e.target.value)}
               className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="Kore">Kore (صوت هادئ وطبيعي)</option>
-              <option value="Fenrir">Fenrir (صوت عميق ورصين)</option>
-              <option value="Puck">Puck (صوت حيوي وودود)</option>
-              <option value="Zephyr">Zephyr (صوت نقي وواضح)</option>
+              <optgroup label="🌐 أصوات Microsoft Edge (Online)">
+                <option value="ar-SA-ZariyahNeural">Zariyah (سعودية - أنثى)</option>
+                <option value="ar-SA-HamedNeural">Hamed (سعودية - ذكر)</option>
+                <option value="ar-EG-SalmaNeural">Salma (مصرية - أنثى)</option>
+                <option value="ar-EG-ShakirNeural">Shakir (مصري - ذكر)</option>
+                <option value="ar-AE-FatimaNeural">Fatima (إماراتية - أنثى)</option>
+                <option value="ar-AE-HamdanNeural">Hamdan (إماراتي - ذكر)</option>
+                <option value="ar-JO-TasnimNeural">Tasnim (أردنية - أنثى)</option>
+                <option value="ar-JO-SanaNeural">Sana (أردنية - أنثى)</option>
+              </optgroup>
+              <optgroup label="📴 صوت أوفلاين (Piper)">
+                <option value="ar_JO-kareem-medium">كريم (Piper - أوفلاين محلي)</option>
+              </optgroup>
             </select>
           ) : (
             <select
