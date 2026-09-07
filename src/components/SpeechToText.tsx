@@ -239,7 +239,8 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       const data = await res.json();
       if (data.text) {
         setTranscription((prev) => (prev ? prev + '\n' + data.text : data.text));
-        setStatusMessage('تم تفريغ الملف الصوتي بنجاح!');
+        const engineName = data.engine || 'المحرك';
+        setStatusMessage(`✅ تم التفريغ بنجاح عبر: ${engineName}`);
       } else if (data.error) {
         setErrorMessage(data.error);
       }
@@ -279,7 +280,8 @@ export const SpeechToText: React.FC<SpeechToTextProps> = ({
       const data = await res.json();
       if (data.text) {
         setTranscription(data.text);
-        setStatusMessage('تم تحسين وتفريغ التسجيل بنجاح بواسطة الذكاء الاصطناعي!');
+        const engineName = data.engine || 'الذكاء الاصطناعي';
+        setStatusMessage(`✅ تم التحسين والتفريغ بنجاح عبر: ${engineName}`);
       } else if (data.error) {
         setErrorMessage(data.error);
       }

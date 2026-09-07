@@ -52,23 +52,108 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Audio transcription (Speech-to-Text) using Gemini
+// Audio transcription (Speech-to-Text) — Local Python Whisper (offline) + Gemini fallback
 app.post("/api/transcribe", async (req, res) => {
   try {
-    const { audioBase64, mimeType = "audio/webm", language = "ar", prompt } = req.body;
+    const { audioBase64, mimeType = "audio/webm", language = "ar", prompt, dialect = "sa", correction = "PY" } = req.body;
 
     if (!audioBase64) {
       return res.status(400).json({ error: "Missing audio data" });
     }
 
+    // 1) Save the base64 audio to a temp file
+    const tempInputPath = path.join(os.tmpdir(), `transcribe_in_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`);
+    const tempInputFile = `${tempInputPath}.webm`;
+    const buffer = Buffer.from(audioBase64, "base64");
+    fs.writeFileSync(tempInputFile, buffer);
+
+    // 2) Convert to WAV (16kHz mono) using ffmpeg for best Whisper compatibility
+    const tempWavFile = `${tempInputPath}.wav`;
+    try {
+      execSync(`ffmpeg -y -i "${tempInputFile}" -vn -ar 16000 -ac 1 -c:a pcm_s16le "${tempWavFile}"`, { timeout: 20000 });
+    } catch (ffmpegErr) {
+      console.warn("ffmpeg conversion warning:", ffmpegErr);
+    }
+
+    // 3) Try LOCAL Python Whisper (offline) first
+    const localWhisperScript = path.join(process.cwd(), "sound", "whisper_handler.py");
+    const useLocal = fs.existsSync(localWhisperScript);
+
+    if (useLocal) {
+      try {
+        console.log("🎤 Using local Python Whisper for offline STT...");
+        const result = await new Promise<any>((resolve, reject) => {
+          const py = spawn("python3", [localWhisperScript, tempWavFile], {
+            cwd: process.cwd(),
+            env: process.env,
+          });
+          let out = "";
+          let errOut = "";
+          py.stdout.on("data", (d) => { out += d.toString(); });
+          py.stderr.on("data", (d) => { errOut += d.toString(); });
+
+          const timer = setTimeout(() => {
+            try { py.kill(); } catch (e) {}
+            reject(new Error("Local Whisper timeout (90s)"));
+          }, 90000);
+
+          py.on("close", (code) => {
+            clearTimeout(timer);
+            try { fs.unlinkSync(tempInputFile); } catch (e) {}
+            try { fs.unlinkSync(tempWavFile); } catch (e) {}
+
+            if (code !== 0) {
+              return reject(new Error(`Local Whisper exited with code ${code}: ${errOut.slice(0, 200)}`));
+            }
+
+            // Find the JSON result in stdout (last JSON block)
+            const lines = out.trim().split("\n");
+            for (let i = lines.length - 1; i >= 0; i--) {
+              const line = lines[i].trim();
+              if (line.startsWith("{") && line.endsWith("}")) {
+                try {
+                  const parsed = JSON.parse(line);
+                  if (parsed.text !== undefined) return resolve(parsed);
+                } catch (e) {}
+              }
+            }
+            reject(new Error("No valid JSON result from local Whisper"));
+          });
+
+          py.on("error", (err) => {
+            clearTimeout(timer);
+            reject(err);
+          });
+        });
+
+        if (result && result.text) {
+          return res.json({
+            success: true,
+            text: result.text,
+            engine: "Local Python Whisper (أوفلاين محلي)",
+            model: result.model || "whisper",
+            duration: result.duration || 0,
+            language: result.language || (language === "ar" ? "العربية" : language),
+            dialect: result.dialect || "",
+            processingTime: result.processing_time || 0,
+          });
+        }
+      } catch (localErr) {
+        console.warn("Local Whisper failed, falling back to Gemini:", localErr);
+        // Fall through to Gemini
+      }
+    }
+
+    // 4) Fallback: Gemini AI (online, requires API key)
     const ai = getGenAI();
     if (!ai) {
       return res.status(503).json({
-        error: "مفتاح Gemini API غير مهيأ. يمكنك استخدام التعرف الصوتي المباشر عبر المتصفح.",
+        error: "التفريغ الأوفلاين غير متاح (Whisper المحلي فشل) ومحرك Gemini غير مهيأ. تأكد من تثبيت Python Whisper.",
         fallbackToBrowser: true,
       });
     }
 
+    console.log("🌐 Falling back to Gemini AI for STT...");
     const audioPart = {
       inlineData: {
         mimeType: mimeType || "audio/webm",
@@ -76,7 +161,7 @@ app.post("/api/transcribe", async (req, res) => {
       },
     };
 
-    const instruction = prompt || 
+    const instruction = prompt ||
       `قم بتفريغ وتحويل هذا التسجيل الصوتي إلى نص مكتوب باللغة ${language === 'ar' ? 'العربية' : language} بدقة واحترافية عالية مع تصحيح الأخطاء اللغوية والإملائية واستخدام علامات الترقيم الصحيحة. أعد فقط النص المفرغ بدون أي شروحات أو مقدمات.`;
 
     const response = await ai.models.generateContent({
@@ -92,7 +177,11 @@ app.post("/api/transcribe", async (req, res) => {
     });
 
     const transcribedText = response.text || "";
-    res.json({ text: transcribedText });
+    res.json({
+      success: true,
+      text: transcribedText,
+      engine: "Gemini AI (أونلاين)",
+    });
   } catch (error: any) {
     console.error("Transcribe API error:", error);
     res.status(500).json({
